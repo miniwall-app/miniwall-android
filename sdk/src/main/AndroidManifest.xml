@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <uses-permission android:name="android.permission.INTERNET" />
+
+    <application>
+        <!-- Hosts presented screens (fullscreen, modal, sheet). Translucent: a sheet shows the app behind its scrim. -->
+        <activity
+            android:name="com.miniwall.sdk.MiniwallActivity"
+            android:exported="false"
+            android:configChanges="orientation|screenSize|screenLayout|smallestScreenSize|keyboardHidden|uiMode|fontScale|locale|layoutDirection|density|colorMode"
+            android:windowSoftInputMode="adjustNothing"
+            android:theme="@style/Miniwall.Translucent" />
+    </application>
+</manifest>

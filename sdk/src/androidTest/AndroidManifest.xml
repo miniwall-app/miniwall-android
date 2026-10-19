@@ -1,0 +1,4 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- The offline test serves screens from a local MockWebServer over http (loopback). -->
+    <application android:usesCleartextTraffic="true" />
+</manifest>
