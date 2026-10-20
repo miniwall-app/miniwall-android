@@ -217,7 +217,7 @@ object Miniwall {
                 async(Dispatchers.IO) {
                     runCatching {
                         val body = client.fetch("/placements/${enc(name)}")
-                        Delivery.pickSide(body, memory.visitorId).paywall.also { FontFiles.load(it); preloadImages(it) }
+                        Delivery.pickSide(body, memory.visitorId).paywall.also { FontFiles.load(it, FontFiles.PRELOAD_WAIT_MS); preloadImages(it) }
                     }
                 }
             }.awaitAll()

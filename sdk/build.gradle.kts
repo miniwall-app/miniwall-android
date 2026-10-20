@@ -30,7 +30,7 @@ android {
     }
     kotlinOptions { jvmTarget = "17" }
     buildFeatures { compose = true }
-    publishing { singleVariant("release") { withSourcesJar(); withJavadocJar() } }
+    publishing { singleVariant("release") { withSourcesJar() } }
 }
 
 dependencies {
@@ -54,12 +54,20 @@ dependencies {
     androidTestImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.8.1")
 }
 
+// Maven Central wants a javadoc jar. The one AGP generates (Dokka) cannot read the core's sealed classes (Java 17 bytecode:
+// "PermittedSubclasses requires ASM9"), so the jar carries a pointer to the documentation instead.
+val javadocJar = tasks.register<Jar>("javadocJar") {
+    archiveClassifier.set("javadoc")
+    from(layout.projectDirectory.file("javadoc-readme.txt")) { rename { "README.txt" } }
+}
+
 // app.miniwall:sdk. Publish with: ./gradlew publishToMavenLocal (check), then your repository (signing and credentials are not in the repo).
 afterEvaluate {
     publishing {
         publications {
             create<MavenPublication>("release") {
                 from(components["release"])
+                artifact(javadocJar)
                 artifactId = "sdk"
         pom {
             name.set("Miniwall Android SDK")

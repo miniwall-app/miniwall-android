@@ -119,7 +119,11 @@ internal class PresentationCoordinator(private val activity: Activity?, private 
         val host = activity ?: return@suspendCancellableCoroutine continuation.resumeWith(Result.failure(MiniwallException("Miniwall: present needs an Activity")))
         // A banner or toast is a view inside the Activity: it needs the lifecycle owners only a ComponentActivity provides.
         // Any other Activity gets a sheet instead of a crash.
-        this.style = if ((style is PresentationStyle.Banner || style is PresentationStyle.Toast) && host !is androidx.activity.ComponentActivity) PresentationStyle.Sheet else style
+        val needsComponentActivity = (style is PresentationStyle.Banner || style is PresentationStyle.Toast) && host !is androidx.activity.ComponentActivity
+        if (needsComponentActivity) {
+            android.util.Log.w("Miniwall", "A banner or toast needs a ComponentActivity host (AppCompatActivity, FlutterFragmentActivity, ReactActivity...); ${host.javaClass.simpleName} is not one, so the screen opens as a sheet and does not close by itself.")
+        }
+        this.style = if (needsComponentActivity) PresentationStyle.Sheet else style
         widthCap = DisplayWidth.cap(
             when (this.style) {
                 PresentationStyle.Modal -> "modal"

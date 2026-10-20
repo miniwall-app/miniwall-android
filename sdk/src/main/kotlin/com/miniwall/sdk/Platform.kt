@@ -284,45 +284,64 @@ internal object Images {
 /**
  * Custom fonts of a screen: the link the server delivered for the name (`assets.fonts`), else
  * `components_config.fonts[name].android` when that is a link to a TTF/OTF, is
- * downloaded once (disk cache) and registered before the screen shows. Names that are not links
+ * downloaded once (disk cache) and registered; the screen waits for it at most [FontFiles.SHOW_WAIT_MS] and otherwise
+ * shows with the system font (the font serves the next screen). Names that are not links
  * (older screens) keep the system font. A font that fails to load is skipped: texts use the system font.
  */
 internal object FontFiles {
-    private val failed = HashSet<String>()
+    /** How long a screen waits for its fonts before it shows with the system font; the download goes on and serves the next screen. */
+    const val SHOW_WAIT_MS = 1500L
+    /** [Miniwall.preload] runs in the background: it can wait for slow fonts. */
+    const val PRELOAD_WAIT_MS = 10_000L
 
-    suspend fun load(paywall: JsonObject?) {
+    private val failed = HashSet<String>()
+    private val inFlight = HashMap<String, kotlinx.coroutines.Job>()
+
+    suspend fun load(paywall: JsonObject?, waitMs: Long = SHOW_WAIT_MS) {
         val fonts = (paywall?.get("components_config") as? JsonObject)?.get("fonts") as? JsonObject ?: return
         val dir = File(Miniwall.appContext.cacheDir, "miniwall/fonts").apply { mkdirs() }
-        // All fonts at once, each with a short limit: a slow network costs one wait, not one per font, and the screen
-        // uses the system font for what did not arrive.
-        kotlinx.coroutines.coroutineScope {
-            for ((name, declaration) in fonts) {
-                if (Fonts.isRegistered(name)) continue
-                val url = DeliveredAssets.fontLink(name, declaration as? JsonObject) ?: continue
-                if (synchronized(failed) { url in failed }) continue
-                val file = File(dir, Integer.toHexString(url.hashCode()) + ".ttf")
-                launch(Dispatchers.IO) {
-                    runCatching {
-                        if (!file.exists() || file.length() == 0L) {
-                            val connection = URL(url).openConnection() as HttpURLConnection
-                            connection.connectTimeout = 6000
-                            connection.readTimeout = 6000
-                            val bytes = try {
-                                connection.inputStream.use { DownloadLimits.readLimited(it, DownloadLimits.MAX_FONT_BYTES, connection.contentLengthLong) }
-                            } finally {
-                                connection.disconnect()
-                            }
-                            // Too large: the system font is used (the failure below marks the link as failed).
-                            if (bytes == null) error("font larger than ${DownloadLimits.MAX_FONT_BYTES} bytes")
-                            val part = File(dir, file.name + ".part")
-                            part.writeBytes(bytes)
-                            part.renameTo(file)
+        // All fonts at once, in the background, and the screen waits at most [waitMs]: a slow network costs one short wait,
+        // not one per font, and the screen uses the system font for what did not arrive. A font that arrives later stays
+        // registered (and cached on disk) for the next screen.
+        val jobs = ArrayList<kotlinx.coroutines.Job>()
+        for ((name, declaration) in fonts) {
+            if (Fonts.isRegistered(name)) continue
+            val url = DeliveredAssets.fontLink(name, declaration as? JsonObject) ?: continue
+            if (synchronized(failed) { url in failed }) continue
+            val file = File(dir, Integer.toHexString(url.hashCode()) + ".ttf")
+            jobs += synchronized(inFlight) {
+                inFlight.getOrPut(url) {
+                    Miniwall.scope.launch(Dispatchers.IO) {
+                        try {
+                            runCatching { download(name, url, file) }
+                                .onFailure { Log.w("Miniwall", "Font $name not loaded: ${it.message}"); file.delete(); synchronized(failed) { failed.add(url) } }
+                        } finally {
+                            synchronized(inFlight) { inFlight.remove(url) }
                         }
-                        Fonts.register(name, file)
-                    }.onFailure { Log.w("Miniwall", "Font $name not loaded: ${it.message}"); file.delete(); synchronized(failed) { failed.add(url) } }
+                    }
                 }
             }
         }
+        if (jobs.isNotEmpty()) kotlinx.coroutines.withTimeoutOrNull(waitMs) { jobs.forEach { it.join() } }
+    }
+
+    private fun download(name: String, url: String, file: File) {
+        if (!file.exists() || file.length() == 0L) {
+            val connection = URL(url).openConnection() as HttpURLConnection
+            connection.connectTimeout = 6000
+            connection.readTimeout = 6000
+            val bytes = try {
+                connection.inputStream.use { DownloadLimits.readLimited(it, DownloadLimits.MAX_FONT_BYTES, connection.contentLengthLong) }
+            } finally {
+                connection.disconnect()
+            }
+            // Too large: the system font is used (the failure above marks the link as failed).
+            if (bytes == null) error("font larger than ${DownloadLimits.MAX_FONT_BYTES} bytes")
+            val part = File(file.parentFile, file.name + ".part")
+            part.writeBytes(bytes)
+            part.renameTo(file)
+        }
+        Fonts.register(name, file)
     }
 }
 

@@ -29,6 +29,7 @@ import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeout
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.jsonObject
 import okhttp3.mockwebserver.Dispatcher
 import okhttp3.mockwebserver.MockResponse
@@ -130,6 +131,21 @@ class MiniwallUiTest {
     )
 
     // ---------------------------------------------------------------- open, choose, buy, restore, close
+
+    /** A custom font whose server never answers (here: an address nothing listens on) must not hold the screen back for its 6 s timeout. */
+    @Test
+    fun aFontThatNeverArrivesDoesNotHoldTheScreenBack() {
+        val config = paywall["components_config"] as JsonObject
+        val fonts = JsonObject(mapOf("Blackhole@400" to JsonObject(mapOf("android" to JsonPrimitive("https://10.255.255.1/blackhole.ttf")))))
+        val withFont = JsonObject(paywall + ("components_config" to JsonObject(config + ("fonts" to fonts))))
+        val started = System.nanoTime()
+        val r = present(ScreenSource.Json(withFont), optionsWithStore())
+        waitFor("Go Pro")
+        val ms = (System.nanoTime() - started) / 1_000_000
+        assertTrue("the screen took $ms ms to show (limit ${FontFiles.SHOW_WAIT_MS} ms for fonts, plus opening it)", ms < 4_000)
+        tap("Close")
+        assertTrue(result(r) is PurchaseResult.Closed)
+    }
 
     @Test
     fun opensAndTheCloseButtonEndsItAsClosed() {
