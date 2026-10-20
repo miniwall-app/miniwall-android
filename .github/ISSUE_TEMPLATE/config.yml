@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Documentation
+    url: https://docs.miniwall.app
+    about: Setup guides and reference for every SDK.
+  - name: Report a security problem
+    url: https://github.com/miniwall-app/miniwall-android/security/advisories/new
+    about: Please report vulnerabilities privately, not as an issue.
