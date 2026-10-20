@@ -67,7 +67,9 @@ jobs:
         run: |
           set -euo pipefail
           token=$(printf '%s:%s' "$CENTRAL_USERNAME" "$CENTRAL_PASSWORD" | base64 -w0)
-          curl -fsS --request POST --header "Authorization: Bearer $token" \
+          echo "::add-mask::$token"
+          # the header goes in through stdin, so the credential is not in the process arguments
+          printf 'header = "Authorization: Bearer %s"\n' "$token" | curl -fsS --config - --request POST \
             --form "bundle=@build/central-bundle.zip" \
             "https://central.sonatype.com/api/v1/publisher/upload?name=miniwall-android-$TAG&publishingType=USER_MANAGED"
 

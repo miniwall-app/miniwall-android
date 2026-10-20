@@ -12,7 +12,8 @@ while IFS= read -r pom; do
   base=${pom%.pom}
   main=$base.jar
   [ -f "$base.aar" ] && main=$base.aar
-  for f in "$pom" "$main" "$base-sources.jar" "$base-javadoc.jar"; do
+  [ "$(ls "$(dirname "$pom")"/*.pom | wc -l)" = 1 ] || { echo "more than one version in $(dirname "$pom"): clean build/central-staging first" >&2; bad=1; }
+  for f in "$pom" "$main" "$base-sources.jar" "$base-javadoc.jar" "$base.module"; do
     [ -f "$f" ] || { echo "missing: $f" >&2; bad=1; continue; }
     [ -f "$f.asc" ] || { echo "not signed: $f" >&2; bad=1; }
     [ -f "$f.md5" ] && [ -f "$f.sha1" ] || { echo "missing checksums: $f" >&2; bad=1; }
