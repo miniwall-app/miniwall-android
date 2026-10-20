@@ -4,7 +4,7 @@ name: Release
 # The upload is "user managed": the owner still presses Publish in the Central Portal, so there are two approvals
 # (the `publish` environment reviewers, then the Portal). Nothing happens until the owner creates the `publish` environment and
 # sets the repository variable PUBLISH_ENABLED=true.
-# Secrets (in the `publish` environment): SIGNING_KEY (armored private key), SIGNING_KEY_PASSWORD, CENTRAL_USERNAME, CENTRAL_PASSWORD
+# Secrets (repository secrets; the `publish` environment keeps the approval gate): SIGNING_KEY (armored private key), SIGNING_KEY_PASSWORD, CENTRAL_USERNAME, CENTRAL_PASSWORD
 # (the Portal user token).
 on:
   push:
