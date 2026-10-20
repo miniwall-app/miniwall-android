@@ -7,7 +7,7 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 
-/** Same cases as sdks/ios Tests/MiniwallCoreTests/PaywallDataTests.swift. */
+/** Same cases as the iOS SDK's PaywallDataTests. */
 class PaywallDataTest {
     @Test
     fun decodesRootStackAndLocalizations() {

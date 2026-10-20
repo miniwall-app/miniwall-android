@@ -36,27 +36,26 @@ Back closes the screen (`Closed`).
 
 ## Develop
 
+The tests run against the [Miniwall spec](https://github.com/miniwall-app/miniwall-spec) (fixtures, golden frames, logic vectors, mock-API screens). The version this SDK is tested against is pinned in `SPEC_VERSION`:
+
 ```bash
-gradle :core:test   # layout goldens, logic vectors, every template, sessions
+scripts/fetch-spec.sh          # puts it in .spec/ (or point -PspecDir=<dir> / MINIWALL_SPEC_DIR at your own checkout)
+./gradlew :core:test           # layout goldens, logic vectors, components, sessions
 ```
 
 On an emulator or device (JDK 17 and the Android SDK, `ANDROID_HOME` or `local.properties`):
 
 ```bash
 ./gradlew :sdk:connectedDebugAndroidTest   # the SDK's UI tests (purchase, restore, flow, offline, Back)
-./gradlew :example:installDebug && ./sweep-templates.sh [dark|large]   # every template of the library, screenshots in build/sweep/
 ```
 
-`example/` is a sample app: `adb shell am start -n com.miniwall.example/.MainActivity --es tpl calm-money` presents one
-template (the display follows the file name: `-bar`, `-toast`, `-slide-in`...). Look at the screenshots after a sweep: it only
-catches crashes and blank screens. If your own Activity can be recreated (rotation), declare `configChanges` for it or call
-`present` from a scope that survives: cancelling the caller's coroutine closes the screen.
+If your own Activity can be recreated (rotation), declare `configChanges` for it or call `present` from a scope that survives: cancelling the caller's coroutine closes the screen.
 
 Use from another Gradle build before publishing:
 
 ```kotlin
 // settings.gradle.kts of the app
-includeBuild("<repo>/sdks/android") {
+includeBuild("<repo>") {
     dependencySubstitution { substitute(module("app.miniwall:sdk")).using(project(":sdk")) }
 }
 ```

@@ -87,7 +87,7 @@ data class Rect(val x: Double, val y: Double, val width: Double, val height: Dou
 /**
  * Computes the frame of every node the way the web renderer's CSS does
  * (the web renderer). Pure and deterministic: the same algorithm
- * exists in Swift (sdks/ios) and both are checked against goldens from the web
+ * exists in Swift (the iOS SDK) and both are checked against goldens from the web
  * (the shared conformance suite). All sizes are border-box, in pt (= CSS px = dp).
  */
 object LayoutEngine {

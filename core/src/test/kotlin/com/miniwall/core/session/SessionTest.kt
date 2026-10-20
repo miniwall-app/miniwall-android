@@ -151,7 +151,7 @@ class SessionTest {
 
     /**
      * Web parity: `complete_workflow` is pressable but the Web SDK never wires `onCompleteWorkflowNavigate`
-     * (sdks/web/src/render.ts), so the press does nothing: no URL opened, no event, no result, no close, no onAction.
+     * (as the Web SDK does), so the press does nothing: no URL opened, no event, no result, no close, no onAction.
      */
     @Test
     fun completeWorkflowDoesNothingLikeTheWebSdk() {

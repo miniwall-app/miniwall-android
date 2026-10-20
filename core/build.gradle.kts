@@ -25,21 +25,15 @@ dependencies {
     testImplementation(kotlin("test"))
 }
 
+// The Miniwall spec (fixtures, golden frames, vectors, mock-API screens) the tests run against.
+// scripts/fetch-spec.sh puts the version pinned in SPEC_VERSION into .spec/; -PspecDir=<dir> or MINIWALL_SPEC_DIR points elsewhere.
+val specDir: File = (findProperty("specDir") as String? ?: System.getenv("MINIWALL_SPEC_DIR"))?.let(::file) ?: rootProject.file(".spec")
+
 tasks.test {
     useJUnitPlatform()
-    // Shared conformance suite (fixtures + goldens from the web renderer).
-    val conformanceDir = rootProject.projectDir.resolve("../../the shared conformance suite")
-    systemProperty("conformanceDir", conformanceDir.canonicalPath)
-    // Screens shared by the UI tests of every platform (sdks/testdata/ui): checked here that they behave as the UI tests expect.
-    val uiTestData = rootProject.projectDir.resolve("../testdata/ui")
-    systemProperty("uiTestData", uiTestData.canonicalPath)
-    if (uiTestData.exists()) inputs.dir(uiTestData)
-    // Re-run when fixtures or goldens change.
-    // (The public mirror has no the shared conformance suite those tests stay in the monorepo.)
-    if (conformanceDir.exists()) {
-        inputs.dir(conformanceDir.resolve("fixtures"))
-        inputs.dir(conformanceDir.resolve("golden"))
-    }
+    systemProperty("specDir", specDir.absolutePath)
+    // Re-run when the spec changes.
+    if (specDir.exists()) for (part in listOf("fixtures", "golden", "vectors", "mock-api")) inputs.dir(specDir.resolve(part))
     testLogging { events("failed"); exceptionFormat = org.gradle.api.tasks.testing.logging.TestExceptionFormat.FULL }
 }
 

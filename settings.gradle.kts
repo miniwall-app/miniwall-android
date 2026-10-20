@@ -25,6 +25,6 @@ val hasAndroidSdk = System.getenv("ANDROID_HOME") != null ||
     file("local.properties").let { it.exists() && it.readText().contains("sdk.dir") }
 if (hasAndroidSdk) {
     include(":sdk")
-    // Sample app and template sweep (sweep-templates.sh).
-    include(":example")
+    // Sample app, when this checkout has one.
+    if (file("example").exists()) include(":example")
 }

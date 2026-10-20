@@ -34,7 +34,7 @@ class ScreenRender(
     val rootFrame: Rect get() = root.layout.frame!!
 }
 
-/** Locale choice (sdks/web/src/render.ts resolveLocale): exact, then same language, then the default. */
+/** Locale choice (the Web SDK's resolveLocale): exact, then same language, then the default. */
 object Localization {
     fun resolve(available: Collection<String>, requested: String?, defaultLocale: String): String {
         if (!requested.isNullOrEmpty()) {

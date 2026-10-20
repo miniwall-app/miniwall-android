@@ -20,8 +20,9 @@ android {
     // The test APK targets the current SDK: an old target makes Android 15 show an "app built for an older version" dialog
     // that takes the first Back press.
     testOptions.targetSdk = 35
-    // UI tests (src/androidTest): the screens shared by every platform's UI tests, sdks/testdata/ui, become test assets.
-    sourceSets.getByName("androidTest").assets.srcDir("../../testdata/ui")
+    // UI tests (src/androidTest): the screens shared by every platform's UI tests (the spec's mock-api/ui) become test assets.
+    val specDir = (findProperty("specDir") as String? ?: System.getenv("MINIWALL_SPEC_DIR"))?.let(::file) ?: rootProject.file(".spec")
+    sourceSets.getByName("androidTest").assets.srcDir(specDir.resolve("mock-api/ui"))
     packaging { resources.excludes += "/META-INF/{AL2.0,LGPL2.1}" }
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
