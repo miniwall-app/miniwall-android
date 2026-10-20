@@ -1,0 +1,85 @@
+name: Release
+
+# Builds, signs and uploads app.miniwall:sdk-core and app.miniwall:sdk to the Maven Central Portal when a version tag is pushed.
+# The upload is "user managed": the owner still presses Publish in the Central Portal, so there are two approvals
+# (the `publish` environment reviewers, then the Portal). Nothing happens until the owner creates the `publish` environment and
+# sets the repository variable PUBLISH_ENABLED=true.
+# Secrets (in the `publish` environment): SIGNING_KEY (armored private key), SIGNING_KEY_PASSWORD, CENTRAL_USERNAME, CENTRAL_PASSWORD
+# (the Portal user token).
+on:
+  push:
+    tags: ['[0-9]+.[0-9]+.[0-9]+*']
+
+permissions:
+  contents: read
+
+jobs:
+  guard:
+    name: tag checks
+    runs-on: ubuntu-latest
+    outputs:
+      enabled: ${{ steps.g.outputs.enabled }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - id: g
+        env:
+          TAG: ${{ github.ref_name }}
+          ENABLED: ${{ vars.PUBLISH_ENABLED }}
+        run: |
+          set -euo pipefail
+          git merge-base --is-ancestor "$GITHUB_SHA" origin/main || { echo "::error::tag $TAG is not on main"; exit 1; }
+          for f in core/build.gradle.kts sdk/build.gradle.kts; do
+            v=$(sed -n 's/^version = "\(.*\)"/\1/p' "$f")
+            [ "$v" = "$TAG" ] || { echo "::error::tag $TAG does not match $f ($v)"; exit 1; }
+          done
+          grep -qE "^## ${TAG//./\\.}( |$)" CHANGELOG.md || { echo "::error::CHANGELOG.md has no '## $TAG' section"; exit 1; }
+          echo "enabled=${ENABLED:-false}" >> "$GITHUB_OUTPUT"
+
+  publish:
+    name: upload to Maven Central
+    needs: guard
+    if: needs.guard.outputs.enabled == 'true'
+    runs-on: ubuntu-latest
+    environment: publish
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+      - uses: android-actions/setup-android@v3
+      - run: scripts/fetch-spec.sh
+      - uses: gradle/actions/setup-gradle@v4
+      - run: ./gradlew :core:test --no-daemon
+      - name: build and sign
+        run: ./gradlew publishAllPublicationsToStagingRepository --no-daemon
+        env:
+          ORG_GRADLE_PROJECT_signingInMemoryKey: ${{ secrets.SIGNING_KEY }}
+          ORG_GRADLE_PROJECT_signingInMemoryKeyPassword: ${{ secrets.SIGNING_KEY_PASSWORD }}
+      - run: scripts/central-bundle.sh
+      - name: upload to the Central Portal (then press Publish there)
+        env:
+          CENTRAL_USERNAME: ${{ secrets.CENTRAL_USERNAME }}
+          CENTRAL_PASSWORD: ${{ secrets.CENTRAL_PASSWORD }}
+          TAG: ${{ github.ref_name }}
+        run: |
+          set -euo pipefail
+          token=$(printf '%s:%s' "$CENTRAL_USERNAME" "$CENTRAL_PASSWORD" | base64 -w0)
+          curl -fsS --request POST --header "Authorization: Bearer $token" \
+            --form "bundle=@build/central-bundle.zip" \
+            "https://central.sonatype.com/api/v1/publisher/upload?name=miniwall-android-$TAG&publishingType=USER_MANAGED"
+
+  github-release:
+    name: GitHub release
+    needs: publish
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.ref_name }}
+        run: gh release create "$TAG" --verify-tag --title "$TAG" --generate-notes
