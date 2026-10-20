@@ -208,7 +208,7 @@ class MiniwallUiTest {
     }
 
     /**
-     * MOBILE-SDK-PLAN 5.1: "inside a flow, Back is screen:back". MiniwallActivity currently calls close() for system Back on
+     * Rule: "inside a flow, Back is screen:back". MiniwallActivity currently calls close() for system Back on
      * every screen, so this test is expected to FAIL until the Activity routes Back to the session (previous screen, close on the first).
      */
     @Test

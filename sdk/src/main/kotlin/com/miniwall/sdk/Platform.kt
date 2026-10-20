@@ -327,7 +327,7 @@ internal object FontFiles {
 }
 
 /**
- * Icons and font links the server delivered next to screens (`assets`, MOBILE-SDK-PLAN S12). Kept for the process:
+ * Icons and font links the server delivered next to screens (`assets`). Kept for the process:
  * a name always maps to the same file, so what an earlier screen brought serves a later one.
  */
 internal object DeliveredAssets {

@@ -39,7 +39,7 @@ object Localization {
     fun resolve(available: Collection<String>, requested: String?, defaultLocale: String): String {
         if (!requested.isNullOrEmpty()) {
             val normalized = requested.replaceFirst('-', '_')
-            // Sorted, like Swift (whose JSON objects have no order): the same screen picks the same language on both.
+            // Sorted (JSON objects have no order on every platform): the same screen picks the same language everywhere.
             val sorted = available.sorted()
             sorted.firstOrNull { it == normalized }?.let { return it }
             sorted.firstOrNull { it.substringBefore('_') == normalized.substringBefore('_') }?.let { return it }

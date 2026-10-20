@@ -56,7 +56,7 @@ sealed interface PresentationStyle {
     data class Toast(val seconds: Double, val top: Boolean = false) : PresentationStyle
 
     companion object {
-        /** The placement's `display` mapped to Android (MOBILE-SDK-PLAN 5.1). */
+        /** The placement's `display` mapped to Android. */
         fun from(display: JsonObject?): PresentationStyle {
             fun s(key: String) = (display?.get(key) as? JsonPrimitive)?.content
             return when (s("format")) {

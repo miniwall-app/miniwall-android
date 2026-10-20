@@ -5,7 +5,7 @@ import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 
 /**
- * `assets` of a delivery body (MOBILE-SDK-PLAN S12): SVG markup per icon (`lucide/x`) and a TTF link per
+ * `assets` of a delivery body: SVG markup per icon (`lucide/x`) and a TTF link per
  * `font_name` (`Inter@600`), so a phone does not call api.iconify.design or trust the links saved in the
  * screen. Older servers send none; every lookup then falls back to the node's own link.
  */
@@ -16,7 +16,7 @@ data class DeliveryAssets(val icons: Map<String, String> = emptyMap(), val fonts
 /**
  * Size limits of downloads (images and fonts come from links in the screen, so a bad link must not fill memory).
  * A download whose `Content-Length` is larger is refused before the body is read; one without a length (or lying
- * about it) is aborted as soon as the bytes read pass the limit. Port: `DownloadLimits` in `Assets.swift`.
+ * about it) is aborted as soon as the bytes read pass the limit.
  */
 object DownloadLimits {
     const val MAX_IMAGE_BYTES = 10L * 1024 * 1024
@@ -81,7 +81,7 @@ object Assets {
             .firstOrNull { it != null && isFontLink(it) }
 }
 
-/** Facts the SDK reads from the device for audiences (docs/specs/targeting.md, mobile section). All are strings or null. */
+/** Facts the SDK reads from the device for audiences. All are strings or null. */
 object AutoAttributes {
     /** Region of a locale (`vi-VN`, `vi_VN`, `zh-Hans-CN`, `es-419`), upper case; null when the locale has none. Never from an IP. */
     fun country(locale: String?): String? {

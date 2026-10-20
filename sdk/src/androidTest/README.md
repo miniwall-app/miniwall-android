@@ -20,6 +20,6 @@ Report: `sdk/build/reports/androidTests/connected/index.html`. The `:sdk` module
 
 Notes
 - The test turns animations off for its run (`settings put global animator_duration_scale 0`, restored after); the SDK then draws no spinner animation.
-- `systemBackInsideAFlowGoesToThePreviousScreen` encodes MOBILE-SDK-PLAN 5.1 ("inside a flow, Back is `screen:back`"). `MiniwallActivity` currently
+- `systemBackInsideAFlowGoesToThePreviousScreen` encodes the rule ("inside a flow, Back is `screen:back`"). `MiniwallActivity` currently
   calls `close()` for system Back on every screen, so that one is expected to fail until the Activity routes Back to the session.
 - Status: written without an Android SDK (cloud has none); not compiled or run yet. Expect small API fixes on the first run.

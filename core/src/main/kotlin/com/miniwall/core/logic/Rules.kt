@@ -271,7 +271,7 @@ object Flow {
 
     /** Chosen options for analytics; typed text never leaves the app. */
     fun chosenOptions(answers: Map<String, Answer>, fields: Map<String, FieldKind>): List<Pair<String, String>> =
-        // By field id (Swift's objects have no order): both platforms report answers in the same order.
+        // By field id (JSON objects have no order on every platform): every platform reports answers in the same order.
         fields.entries.sortedBy { it.key }.flatMap { (fieldId, kind) ->
             if (kind == FieldKind.TEXT) return@flatMap emptyList()
             when (val a = answers[fieldId]) {

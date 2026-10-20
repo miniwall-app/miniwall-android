@@ -20,7 +20,7 @@ import kotlin.test.fail
 
 /**
  * Every case in the spec repo vectors must give the web's exact output.
- * Same suite as the iOS SDK's VectorTests.
+ * Same suite on every platform SDK.
  */
 class VectorTest {
     private val dir = File(com.miniwall.core.Spec.dir.path, "vectors")
