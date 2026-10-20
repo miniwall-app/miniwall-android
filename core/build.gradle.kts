@@ -12,6 +12,7 @@ version = "0.1.0"
 
 java {
     withSourcesJar()
+    withJavadocJar()
     sourceCompatibility = JavaVersion.VERSION_17
     targetCompatibility = JavaVersion.VERSION_17
 }
@@ -48,7 +49,7 @@ publishing {
             description.set("Layout engine, session logic and screen model shared by the Miniwall mobile SDKs.")
             url.set("https://docs.miniwall.app")
             licenses { license { name.set("MIT License"); url.set("https://opensource.org/licenses/MIT") } }
-            developers { developer { name.set("Miniwall") } }
+            developers { developer { id.set("miniwall"); name.set("Miniwall"); url.set("https://miniwall.app") } }
             scm {
                 url.set("https://github.com/miniwall-app/miniwall-android")
                 connection.set("scm:git:https://github.com/miniwall-app/miniwall-android.git")
@@ -58,3 +59,5 @@ publishing {
         }
     }
 }
+
+apply(from = rootProject.file("gradle/release.gradle.kts"))

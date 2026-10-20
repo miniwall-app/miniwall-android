@@ -30,7 +30,7 @@ android {
     }
     kotlinOptions { jvmTarget = "17" }
     buildFeatures { compose = true }
-    publishing { singleVariant("release") { withSourcesJar() } }
+    publishing { singleVariant("release") { withSourcesJar(); withJavadocJar() } }
 }
 
 dependencies {
@@ -66,7 +66,7 @@ afterEvaluate {
             description.set("Show screens built in the Miniwall dashboard natively with Jetpack Compose.")
             url.set("https://docs.miniwall.app")
             licenses { license { name.set("MIT License"); url.set("https://opensource.org/licenses/MIT") } }
-            developers { developer { name.set("Miniwall") } }
+            developers { developer { id.set("miniwall"); name.set("Miniwall"); url.set("https://miniwall.app") } }
             scm {
                 url.set("https://github.com/miniwall-app/miniwall-android")
                 connection.set("scm:git:https://github.com/miniwall-app/miniwall-android.git")
@@ -77,3 +77,5 @@ afterEvaluate {
         }
     }
 }
+
+apply(from = rootProject.file("gradle/release.gradle.kts"))
