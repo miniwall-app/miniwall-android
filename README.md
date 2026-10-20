@@ -49,6 +49,16 @@ On an emulator or device (JDK 17 and the Android SDK, `ANDROID_HOME` or `local.p
 ./gradlew :sdk:connectedDebugAndroidTest   # the SDK's UI tests (purchase, restore, flow, offline, Back)
 ```
 
+`example/` is a sample app. It bundles the spec's templates, so with the open spec it shows the ten example screens:
+
+```bash
+./gradlew :example:installDebug
+adb shell am start -n com.miniwall.example/.MainActivity --es tpl free-trial   # present one (the display follows the file name: -bar, -toast, -slide-in...)
+./sweep-templates.sh [dark|large]   # present every bundled template, check the app survives, screenshots in build/sweep/
+```
+
+To sweep a bigger library, build with `-PspecDir=<folder>` (and `MINIWALL_SPEC_DIR=<folder> ./sweep-templates.sh`) pointing at a spec folder that has more `fixtures/templates`.
+
 If your own Activity can be recreated (rotation), declare `configChanges` for it or call `present` from a scope that survives: cancelling the caller's coroutine closes the screen.
 
 Use from another Gradle build before publishing:
