@@ -1,0 +1,47 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": [
+    "config:best-practices"
+  ],
+  "timezone": "Asia/Ho_Chi_Minh",
+  "schedule": [
+    "before 6am on monday"
+  ],
+  "prConcurrentLimit": 5,
+  "labels": [
+    "dependencies"
+  ],
+  "commitBody": "Signed-off-by: renovate[bot] <29139614+renovate[bot]@users.noreply.github.com>",
+  "packageRules": [
+    {
+      "description": "One pull request for all GitHub Actions updates (they are pinned by commit digest).",
+      "matchManagers": [
+        "github-actions"
+      ],
+      "groupName": "GitHub Actions"
+    },
+    {
+      "description": "A major version of a dependency waits for the maintainer to ask for it on the dashboard issue.",
+      "matchUpdateTypes": [
+        "major"
+      ],
+      "dependencyDashboardApproval": true
+    }
+  ],
+  "customManagers": [
+    {
+      "description": "SPEC_VERSION pins the commit of miniwall-spec this SDK is tested against; a new spec opens a pull request, and the tests say what no longer matches.",
+      "customType": "regex",
+      "managerFilePatterns": [
+        "/^SPEC_VERSION$/"
+      ],
+      "matchStrings": [
+        "^(?<currentDigest>[0-9a-f]{40})\\s*$"
+      ],
+      "datasourceTemplate": "git-refs",
+      "packageNameTemplate": "https://github.com/miniwall-app/miniwall-spec",
+      "currentValueTemplate": "main",
+      "depNameTemplate": "miniwall-spec"
+    }
+  ]
+}

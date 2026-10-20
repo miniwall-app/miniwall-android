@@ -28,6 +28,10 @@ The maintainer reviews every pull request. We aim to reply within 7 days; this i
 5. **Sign off every commit** (`git commit -s`). That adds `Signed-off-by: Your Name <you@example.com>` and states you wrote the change or have the right to submit it under the [Developer Certificate of Origin](https://developercertificate.org/). A check fails the pull request without it.
 6. Write commit messages as `type(scope): what changed` (for example `fix(core): ignore an empty placement`).
 
+## Credit
+
+Contributors are named in the `CHANGELOG.md` entry of the release that carries their change ("thanks @name") and in the release notes. There is no payment or reward program, and we do not promise one.
+
 ## Public API
 
 The public API of the SDK is stable on purpose. A change that breaks it needs a clear reason, a note in `CHANGELOG`, and the maintainer's agreement before you write it.
