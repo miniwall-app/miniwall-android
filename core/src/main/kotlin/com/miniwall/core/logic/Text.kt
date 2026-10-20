@@ -167,7 +167,7 @@ object TextLogic {
         return out.filter { it.text.isNotEmpty() }
     }
 
-    // sdks/web/src/url.ts
+    // Web SDK src/url.ts
     private val OPENABLE = Regex("^(https?:|mailto:|tel:)")
     private val ROOT_PATH = Regex("^/(?!/)")
 
@@ -177,7 +177,7 @@ object TextLogic {
         return OPENABLE.containsMatchIn(plain) || ROOT_PATH.containsMatchIn(plain)
     }
 
-    // sdks/web/src/fonts.ts
+    // Web SDK src/fonts.ts
     private val FONT_NAME = Regex("""^(?:[A-Z]+:)?(.+)@(\d{3})$""")
 
     /** `Fraunces@700` -> ("Fraunces", 700); anything else -> null. */

@@ -60,7 +60,7 @@ class LayoutNode(
     companion object {
         /**
          * Layout tree for a component; hidden nodes are dropped, unsupported ones are replaced by
-         * their fallback or dropped (same as the web's Node.svelte). Returns null when nothing renders.
+         * their fallback or dropped (same as the web renderer). Returns null when nothing renders.
          */
         fun from(component: Component, measure: (Component) -> Measurable? = { null }): LayoutNode? {
             if (!component.visible) return null

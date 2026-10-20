@@ -34,6 +34,7 @@ jobs:
             v=$(sed -n 's/^version = "\(.*\)"/\1/p' "$f")
             [ "$v" = "$TAG" ] || { echo "::error::tag $TAG does not match $f ($v)"; exit 1; }
           done
+          grep -q "const val VERSION = \"$TAG\"" sdk/src/main/kotlin/com/miniwall/sdk/Miniwall.kt || { echo "::error::Miniwall.VERSION is not $TAG (it is sent as X-Miniwall-SDK)"; exit 1; }
           grep -qE "^## ${TAG//./\\.}( |$)" CHANGELOG.md || { echo "::error::CHANGELOG.md has no '## $TAG' section"; exit 1; }
           echo "enabled=${ENABLED:-false}" >> "$GITHUB_OUTPUT"
 

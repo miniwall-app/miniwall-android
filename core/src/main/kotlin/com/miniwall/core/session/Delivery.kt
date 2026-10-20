@@ -23,7 +23,7 @@ class MemoryStore : KeyValueStore {
     override fun set(key: String, value: String?) { if (value == null) map.remove(key) else map[key] = value }
 }
 
-/** Why a placement showed nothing (sdks/web/src/types.ts SkipReason). */
+/** Why a placement showed nothing (Web SDK src/types.ts SkipReason). */
 enum class SkipReason(val wire: String) { FREQUENCY_CAP("frequency_cap"), AUDIENCE("audience"), HOLDOUT("holdout") }
 
 /** Which published screen an event belongs to (PaywallContext on the web). */
@@ -64,7 +64,7 @@ data class TargetingInput(
 /**
  * Per-device memory: visitor id, how often each placement showed (frequency cap,
  * `seen_count`), first-seen day, last exposure (purchase attribution). Same keys and
- * rules as the web's localStorage (sdks/web/src/targeting.ts, track.ts).
+ * rules as the web's localStorage (Web SDK src/targeting.ts, track.ts).
  */
 class DeviceMemory(private val store: KeyValueStore, private val clock: () -> Long = System::currentTimeMillis) {
     private val sessionShown = HashMap<String, Int>()
@@ -157,7 +157,7 @@ class DeviceMemory(private val store: KeyValueStore, private val clock: () -> Lo
     }
 }
 
-/** A delivery API body turned into the screen to show (sdks/web/src/load.ts). */
+/** A delivery API body turned into the screen to show (Web SDK src/load.ts). */
 object Delivery {
     private fun contextOf(body: JsonObject): EventContext? {
         val id = (body["paywallId"] as? JsonPrimitive)?.content ?: return null
@@ -233,7 +233,7 @@ object Delivery {
 /** Who sends an event: sent as `platform` (`ios` | `android`), `sdkVersion` and `appVersion` (none of it personal). */
 data class EventClient(val platform: String, val sdkVersion: String, val appVersion: String? = null)
 
-/** Analytics events as the API takes them (`POST /v1/sdk/events`, sdks/web/src/track.ts). */
+/** Analytics events as the API takes them (`POST /v1/sdk/events`, Web SDK src/track.ts). */
 object Events {
     fun contextJson(context: EventContext, extra: Map<String, JsonElement> = emptyMap()): JsonObject = JsonObject(
         buildMap {

@@ -114,7 +114,7 @@ internal fun jsNumber(d: Double): String = when {
     else -> d.toString()
 }
 
-/** Placement audiences, A/B buckets and screen flows (sdks/web/src/targeting.ts, load.ts, flow.ts). */
+/** Placement audiences, A/B buckets and screen flows (Web SDK src/targeting.ts, load.ts, flow.ts). */
 object Targeting {
     /**
      * A value an audience condition compares: a string, number, boolean or null.
@@ -200,7 +200,7 @@ object Targeting {
     }
 }
 
-/** Screen links and answers (sdks/web/src/flow.ts). */
+/** Screen links and answers (Web SDK src/flow.ts). */
 object Flow {
     sealed interface Link {
         data object Back : Link

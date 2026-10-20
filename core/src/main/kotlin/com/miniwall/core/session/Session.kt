@@ -40,7 +40,7 @@ interface SessionHost {
 }
 
 /**
- * One presentation of a screen and the flow behind it (sdks/web/src/render.ts):
+ * One presentation of a screen and the flow behind it (Web SDK src/render.ts):
  * "Go to screen" swaps in the next screen, answers carry across, and events reach the API.
  */
 class PaywallSession(

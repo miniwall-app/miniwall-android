@@ -18,7 +18,7 @@ import kotlin.math.max
 /**
  * One laid-out screen, ready to paint: the header pinned at the top, the root stack
  * (which scrolls inside [rootFrame] when [contentHeight] is taller), the footer pinned at
- * the bottom, and an open sheet over a dimmed backdrop. Mirrors Paywall.svelte.
+ * the bottom, and an open sheet over a dimmed backdrop. Mirrors the web renderer.
  */
 class ScreenRender(
     val width: Double,
@@ -216,7 +216,7 @@ sealed interface ScreenEvent {
 }
 
 /**
- * State and actions of one shown screen (Paywall.svelte's handlers). Platforms call [render]
+ * State and actions of one shown screen (the web renderer's handlers). Platforms call [render]
  * when the size or [state] changes, and [handle] when a node with an action is tapped.
  */
 class ScreenController(

@@ -5,7 +5,7 @@ import kotlinx.serialization.json.JsonPrimitive
 
 /**
  * Widest a presented screen gets on wide screens (tablets, landscape), in dp. Same numbers as the Web SDK's
- * `WIDTHS` (sdks/web/src/present.ts). On a phone the screen is narrower than any of them, so nothing changes there.
+ * `WIDTHS` (Web SDK src/present.ts). On a phone the screen is narrower than any of them, so nothing changes there.
  * [kind]: `modal`, `sheet` (the web's slide_in), `toast`, `fullscreen` or `banner`. [size]: `small`, `medium`, `large`.
  * An explicit [maxContentWidth] wins over [size]; no size and no width means no limit (null).
  */

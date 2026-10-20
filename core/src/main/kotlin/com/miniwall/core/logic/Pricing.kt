@@ -36,7 +36,7 @@ data class ProductInfo(
     data class Offer(val price: Double, val period: Period)
 }
 
-/** `{{ product.* }}` values per package (sdks/web/src/pricing.ts). */
+/** `{{ product.* }}` values per package (Web SDK src/pricing.ts). */
 object Pricing {
     private val MONTH_DAYS = Period.Unit.MONTH.days
 
