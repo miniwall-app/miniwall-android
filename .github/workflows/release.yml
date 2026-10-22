@@ -98,7 +98,7 @@ jobs:
           for a in sdk sdk-core; do
             d="build/maven-repo/app/miniwall/$a/$TAG"
             for f in "$a-$TAG.pom" "$a-$TAG.module"; do [ -f "$d/$f" ] || { echo "::error::missing $d/$f"; exit 1; }; done
-            ls "$d"/"$a-$TAG".aar "$d"/"$a-$TAG".jar >/dev/null 2>&1 || { echo "::error::no $a-$TAG.aar or .jar"; exit 1; }
+            [ -f "$d/$a-$TAG.aar" ] || [ -f "$d/$a-$TAG.jar" ] || { echo "::error::no $a-$TAG.aar or .jar in $d"; exit 1; }
             grep -q "<version>$TAG</version>" "build/maven-repo/app/miniwall/$a/maven-metadata.xml" || { echo "::error::maven-metadata.xml of $a does not list $TAG"; exit 1; }
           done
       - name: list the repository that would be uploaded (dry run)
