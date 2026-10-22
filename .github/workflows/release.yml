@@ -4,7 +4,8 @@ name: Release
 # https://maven.miniwall.app (a public Cloudflare R2 bucket) when a version tag is pushed. Published versions are never overwritten.
 # Nothing is published until the repository variable PUBLISH_ENABLED is true. If the `publish` environment has required reviewers, the job also
 # waits for them; without that environment, pushing the tag publishes at once.
-# "Run workflow" (workflow_dispatch) is a dry run: the same build, signing and file checks, but nothing is read from or written to the bucket.
+# "Run workflow" (workflow_dispatch) is a dry run: the same build, signing and file checks; no artifact is read from or written to the bucket
+# (it only lists the bucket and writes, then removes, one marker file under _dryrun/ to prove the credentials work).
 # Secrets (repository secrets): R2_ENDPOINT (https://<account id>.r2.cloudflarestorage.com),
 # R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY (an R2 API token with object read and write on the bucket); optional SIGNING_KEY (armored PGP private
 # key) and SIGNING_KEY_PASSWORD, to sign the artifacts.
@@ -75,6 +76,15 @@ jobs:
       - run: scripts/fetch-spec.sh
       - uses: gradle/actions/setup-gradle@v4
       - run: ./gradlew :core:test --no-daemon
+      - name: check the bucket credentials (dry run)
+        if: github.event_name == 'workflow_dispatch'
+        run: |
+          set -euo pipefail
+          aws s3 ls "s3://$BUCKET" --endpoint-url "$R2_ENDPOINT" >/dev/null || [ $? -eq 1 ]
+          echo ok > dryrun-marker.txt
+          aws s3 cp dryrun-marker.txt "s3://$BUCKET/_dryrun/marker.txt" --endpoint-url "$R2_ENDPOINT" --no-progress
+          aws s3 rm "s3://$BUCKET/_dryrun/marker.txt" --endpoint-url "$R2_ENDPOINT"
+          echo "the credentials can list, write and delete in $BUCKET"
       - name: refuse to overwrite a published version
         if: github.event_name == 'push'
         run: |
