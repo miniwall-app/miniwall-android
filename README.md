@@ -3,12 +3,37 @@
 Show screens built in the Miniwall dashboard natively with Jetpack Compose. Miniwall renders; your
 app sells: prices come from your app, purchases run in your code (Play Billing or your library).
 
-Status: preview, not yet on Maven Central (`./gradlew publishToMavenLocal` works, and so does the signed Central bundle: `publishAllPublicationsToStagingRepository`, `scripts/central-bundle.sh`). Tested on Android 15 and Android 7 (API 24) emulators: unit and instrumented tests, 77-template sweep in light, dark and large text. minSdk 24, Kotlin 2.0, Compose. The AAR is built with AGP 8.7.3 / Kotlin 2.0 and works in apps on newer AGP and Kotlin (a Flutter 3.47 app on AGP 8.11 and Kotlin 2.2 builds and runs against it).
+Status: `0.1.0`. Tested on Android 15 and Android 7 (API 24) emulators: unit and instrumented tests, 77-template sweep in light, dark and large text. minSdk 24, Kotlin 2.0, Compose. The AAR is built with AGP 8.7.3 / Kotlin 2.0 and works in apps on newer AGP and Kotlin (a Flutter 3.47 app on AGP 8.11 and Kotlin 2.2 builds and runs against it).
 
 | Module | What |
 |---|---|
 | `core` | Pure Kotlin (JVM): screen model, layout engine, shared logic, render tree, sessions. Tested on any JDK |
 | `sdk` | Android library: Compose renderer, networking, `Miniwall` API, `MiniwallActivity`. Enabled when the Android SDK is present |
+
+## Install
+
+The artifacts are served from `https://maven.miniwall.app`, a standard Maven repository (the rest of the dependencies come from Maven Central and Google as usual).
+
+```kotlin
+// settings.gradle.kts
+dependencyResolutionManagement {
+    repositories {
+        google()
+        mavenCentral()
+        maven {
+            url = uri("https://maven.miniwall.app")
+            content { includeGroup("app.miniwall") }
+        }
+    }
+}
+
+// app/build.gradle.kts
+dependencies {
+    implementation("app.miniwall:sdk:0.1.0")
+}
+```
+
+Projects that declare repositories in the root `build.gradle` (`allprojects { repositories { ... } }`) add the same `maven { ... }` block there.
 
 ## Use
 

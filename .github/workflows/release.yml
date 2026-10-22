@@ -1,11 +1,11 @@
 name: Release
 
-# Builds, signs and uploads app.miniwall:sdk-core and app.miniwall:sdk to the Maven Central Portal when a version tag is pushed.
-# The upload is "user managed": the owner still presses Publish in the Central Portal, so there are two approvals
-# (the `publish` environment reviewers, then the Portal). Nothing happens until the owner creates the `publish` environment and
-# sets the repository variable PUBLISH_ENABLED=true.
-# Secrets (repository secrets; the `publish` environment keeps the approval gate): SIGNING_KEY (armored private key), SIGNING_KEY_PASSWORD, CENTRAL_USERNAME, CENTRAL_PASSWORD
-# (the Portal user token).
+# Builds the artifacts app.miniwall:sdk-core and app.miniwall:sdk (signed when a key is supplied) and adds them to the Maven repository served at
+# https://maven.miniwall.app (a public Cloudflare R2 bucket) when a version tag is pushed. Published versions are never overwritten.
+# Nothing happens until the owner creates the `publish` environment and sets the repository variable PUBLISH_ENABLED=true.
+# Secrets (repository secrets; the `publish` environment keeps the approval gate): R2_ENDPOINT (https://<account id>.r2.cloudflarestorage.com),
+# R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY (an R2 API token with object read and write on the bucket); optional SIGNING_KEY (armored PGP private
+# key) and SIGNING_KEY_PASSWORD, to sign the artifacts.
 on:
   push:
     tags: ['[0-9]+.[0-9]+.[0-9]+*']
@@ -39,11 +39,21 @@ jobs:
           echo "enabled=${ENABLED:-false}" >> "$GITHUB_OUTPUT"
 
   publish:
-    name: upload to Maven Central
+    name: publish to maven.miniwall.app
     needs: guard
     if: needs.guard.outputs.enabled == 'true'
     runs-on: ubuntu-latest
     environment: publish
+    env:
+      BUCKET: miniwall-maven
+      AWS_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+      AWS_DEFAULT_REGION: auto
+      # R2 does not accept the extra checksums that newer AWS CLI versions add by default.
+      AWS_REQUEST_CHECKSUM_CALCULATION: when_required
+      AWS_RESPONSE_CHECKSUM_VALIDATION: when_required
+      R2_ENDPOINT: ${{ secrets.R2_ENDPOINT }}
+      TAG: ${{ github.ref_name }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-java@v4
@@ -54,25 +64,32 @@ jobs:
       - run: scripts/fetch-spec.sh
       - uses: gradle/actions/setup-gradle@v4
       - run: ./gradlew :core:test --no-daemon
+      - name: refuse to overwrite a published version
+        run: |
+          set -euo pipefail
+          for a in sdk sdk-core; do
+            if [ -n "$(aws s3 ls "s3://$BUCKET/app/miniwall/$a/$TAG/" --endpoint-url "$R2_ENDPOINT")" ]; then
+              echo "::error::app.miniwall:$a:$TAG is already published; a version is never overwritten (publish the next version)"; exit 1
+            fi
+          done
+      - name: start from what is already published (so maven-metadata.xml lists every version)
+        run: aws s3 sync "s3://$BUCKET" build/maven-repo --endpoint-url "$R2_ENDPOINT" --no-progress
       - name: build and sign
         run: ./gradlew publishAllPublicationsToStagingRepository --no-daemon
         env:
           ORG_GRADLE_PROJECT_signingInMemoryKey: ${{ secrets.SIGNING_KEY }}
           ORG_GRADLE_PROJECT_signingInMemoryKeyPassword: ${{ secrets.SIGNING_KEY_PASSWORD }}
-      - run: scripts/central-bundle.sh
-      - name: upload to the Central Portal (then press Publish there)
-        env:
-          CENTRAL_USERNAME: ${{ secrets.CENTRAL_USERNAME }}
-          CENTRAL_PASSWORD: ${{ secrets.CENTRAL_PASSWORD }}
-          TAG: ${{ github.ref_name }}
+      - name: check what will be uploaded
         run: |
           set -euo pipefail
-          token=$(printf '%s:%s' "$CENTRAL_USERNAME" "$CENTRAL_PASSWORD" | base64 -w0)
-          echo "::add-mask::$token"
-          # the header goes in through stdin, so the credential is not in the process arguments
-          printf 'header = "Authorization: Bearer %s"\n' "$token" | curl -fsS --config - --request POST \
-            --form "bundle=@build/central-bundle.zip" \
-            "https://central.sonatype.com/api/v1/publisher/upload?name=miniwall-android-$TAG&publishingType=USER_MANAGED"
+          for a in sdk sdk-core; do
+            d="build/maven-repo/app/miniwall/$a/$TAG"
+            for f in "$a-$TAG.pom" "$a-$TAG.module"; do [ -f "$d/$f" ] || { echo "::error::missing $d/$f"; exit 1; }; done
+            ls "$d"/"$a-$TAG".aar "$d"/"$a-$TAG".jar >/dev/null 2>&1 || { echo "::error::no $a-$TAG.aar or .jar"; exit 1; }
+            grep -q "<version>$TAG</version>" "build/maven-repo/app/miniwall/$a/maven-metadata.xml" || { echo "::error::maven-metadata.xml of $a does not list $TAG"; exit 1; }
+          done
+      - name: upload
+        run: aws s3 sync build/maven-repo "s3://$BUCKET" --endpoint-url "$R2_ENDPOINT" --no-progress
 
   github-release:
     name: GitHub release

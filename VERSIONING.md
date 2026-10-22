@@ -1,6 +1,6 @@
 # Versioning and support
 
-The Android SDK is `app.miniwall:sdk` (and `app.miniwall:sdk-core`) on Maven Central; the version is the Maven version.
+The Android SDK is `app.miniwall:sdk` (and `app.miniwall:sdk-core`) on the Miniwall Maven repository (`https://maven.miniwall.app`); the version is the Maven version.
 
 ## Version numbers
 
