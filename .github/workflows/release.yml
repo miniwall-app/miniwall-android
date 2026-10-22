@@ -2,13 +2,16 @@ name: Release
 
 # Builds the artifacts app.miniwall:sdk-core and app.miniwall:sdk (signed when a key is supplied) and adds them to the Maven repository served at
 # https://maven.miniwall.app (a public Cloudflare R2 bucket) when a version tag is pushed. Published versions are never overwritten.
-# Nothing happens until the owner creates the `publish` environment and sets the repository variable PUBLISH_ENABLED=true.
-# Secrets (repository secrets; the `publish` environment keeps the approval gate): R2_ENDPOINT (https://<account id>.r2.cloudflarestorage.com),
+# Nothing is published until the repository variable PUBLISH_ENABLED is true. If the `publish` environment has required reviewers, the job also
+# waits for them; without that environment, pushing the tag publishes at once.
+# "Run workflow" (workflow_dispatch) is a dry run: the same build, signing and file checks, but nothing is read from or written to the bucket.
+# Secrets (repository secrets): R2_ENDPOINT (https://<account id>.r2.cloudflarestorage.com),
 # R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY (an R2 API token with object read and write on the bucket); optional SIGNING_KEY (armored PGP private
 # key) and SIGNING_KEY_PASSWORD, to sign the artifacts.
 on:
   push:
     tags: ['[0-9]+.[0-9]+.[0-9]+*']
+  workflow_dispatch:
 
 permissions:
   contents: read
@@ -16,6 +19,7 @@ permissions:
 jobs:
   guard:
     name: tag checks
+    if: github.event_name == 'push'
     runs-on: ubuntu-latest
     outputs:
       enabled: ${{ steps.g.outputs.enabled }}
@@ -41,7 +45,7 @@ jobs:
   publish:
     name: publish to maven.miniwall.app
     needs: guard
-    if: needs.guard.outputs.enabled == 'true'
+    if: always() && ((github.event_name == 'push' && needs.guard.outputs.enabled == 'true') || github.event_name == 'workflow_dispatch')
     runs-on: ubuntu-latest
     environment: publish
     env:
@@ -53,18 +57,26 @@ jobs:
       AWS_REQUEST_CHECKSUM_CALCULATION: when_required
       AWS_RESPONSE_CHECKSUM_VALIDATION: when_required
       R2_ENDPOINT: ${{ secrets.R2_ENDPOINT }}
-      TAG: ${{ github.ref_name }}
     steps:
       - uses: actions/checkout@v4
+      - name: version to publish (the tag; a dry run reads it from the build)
+        run: |
+          if [ "$GITHUB_EVENT_NAME" = push ]; then v="$GITHUB_REF_NAME"; else v=$(sed -n 's/^version = "\(.*\)"/\1/p' core/build.gradle.kts); fi
+          echo "TAG=$v" >> "$GITHUB_ENV"
+          echo "version $v ($GITHUB_EVENT_NAME)"
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: 17
       - uses: android-actions/setup-android@v3
+        with:
+          # The runner's SDK manager no longer has the legacy `tools` package that the action installs by default.
+          packages: ''
       - run: scripts/fetch-spec.sh
       - uses: gradle/actions/setup-gradle@v4
       - run: ./gradlew :core:test --no-daemon
       - name: refuse to overwrite a published version
+        if: github.event_name == 'push'
         run: |
           set -euo pipefail
           for a in sdk sdk-core; do
@@ -73,6 +85,7 @@ jobs:
             fi
           done
       - name: start from what is already published (so maven-metadata.xml lists every version)
+        if: github.event_name == 'push'
         run: aws s3 sync "s3://$BUCKET" build/maven-repo --endpoint-url "$R2_ENDPOINT" --no-progress
       - name: build and sign
         run: ./gradlew publishAllPublicationsToStagingRepository --no-daemon
@@ -88,12 +101,17 @@ jobs:
             ls "$d"/"$a-$TAG".aar "$d"/"$a-$TAG".jar >/dev/null 2>&1 || { echo "::error::no $a-$TAG.aar or .jar"; exit 1; }
             grep -q "<version>$TAG</version>" "build/maven-repo/app/miniwall/$a/maven-metadata.xml" || { echo "::error::maven-metadata.xml of $a does not list $TAG"; exit 1; }
           done
+      - name: list the repository that would be uploaded (dry run)
+        if: github.event_name == 'workflow_dispatch'
+        run: find build/maven-repo -type f | sort
       - name: upload
+        if: github.event_name == 'push'
         run: aws s3 sync build/maven-repo "s3://$BUCKET" --endpoint-url "$R2_ENDPOINT" --no-progress
 
   github-release:
     name: GitHub release
     needs: publish
+    if: github.event_name == 'push'
     runs-on: ubuntu-latest
     permissions:
       contents: write
