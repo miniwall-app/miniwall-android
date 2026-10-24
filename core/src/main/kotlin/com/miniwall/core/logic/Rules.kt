@@ -107,11 +107,30 @@ internal fun jsString(e: JsonElement?): String = when {
     else -> e.toString()
 }
 
-internal fun jsNumber(d: Double): String = when {
-    d.isNaN() -> "NaN"
-    d == floor(d) && !d.isInfinite() && kotlin.math.abs(d) < 9e15 -> d.toLong().toString()
-    d == floor(d) && !d.isInfinite() && kotlin.math.abs(d) < 1e21 -> java.math.BigDecimal(d).toPlainString()
-    else -> d.toString()
+internal fun jsNumber(d: Double): String = JsNumber.format(d)
+
+/** `String(number)` as JavaScript prints it (ECMAScript Number::toString): shortest digits, plain below 1e21, exponent form beyond. */
+object JsNumber {
+    fun format(d: Double): String {
+        if (d.isNaN()) return "NaN"
+        if (d.isInfinite()) return if (d > 0) "Infinity" else "-Infinity"
+        if (d == 0.0) return "0"
+        val bd = java.math.BigDecimal(java.lang.Double.toString(kotlin.math.abs(d))).stripTrailingZeros()
+        val digits = bd.unscaledValue().toString()
+        val k = digits.length
+        val n = k - bd.scale()
+        val body = when {
+            n in k..21 -> digits + "0".repeat(n - k)
+            n in 1..21 -> digits.substring(0, n) + "." + digits.substring(n)
+            n in -5..0 -> "0." + "0".repeat(-n) + digits
+            else -> {
+                val e = n - 1
+                val mantissa = if (k == 1) digits else digits[0] + "." + digits.substring(1)
+                mantissa + "e" + (if (e >= 0) "+" else "-") + kotlin.math.abs(e)
+            }
+        }
+        return if (d < 0) "-$body" else body
+    }
 }
 
 /** Placement audiences, A/B buckets and screen flows (Web SDK src/targeting.ts, load.ts, flow.ts). */

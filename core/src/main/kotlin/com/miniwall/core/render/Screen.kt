@@ -36,6 +36,10 @@ class ScreenRender(
 
 /** Locale choice (the Web SDK's resolveLocale): exact, then same language, then the default. */
 object Localization {
+    /** The locale a screen is drawn in: [resolve] over the screen's `components_localizations` and `default_locale`. */
+    fun forPaywall(paywall: JsonObject, requested: String?): String =
+        resolve((paywall["components_localizations"] as? JsonObject)?.keys ?: emptySet(), requested, paywall.str("default_locale") ?: "en_US")
+
     fun resolve(available: Collection<String>, requested: String?, defaultLocale: String): String {
         if (!requested.isNullOrEmpty()) {
             val normalized = requested.replaceFirst('-', '_')

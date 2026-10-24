@@ -55,6 +55,7 @@ import com.miniwall.core.logic.Flow
 import com.miniwall.core.render.Fill
 import com.miniwall.core.logic.PackageInfo
 import com.miniwall.core.logic.Pricing
+import com.miniwall.core.render.Localization
 import com.miniwall.core.render.ScreenController
 import com.miniwall.core.session.PaywallSession
 import com.miniwall.core.session.PurchaseResult
@@ -90,12 +91,15 @@ internal class PresentationCoordinator(private val activity: Activity?, private 
     fun start(resolved: Resolved, finish: (PurchaseResult) -> Unit) {
         onFinish = finish
         val locale = Miniwall.locale(options)
-        val computed = Pricing.productVariables(options.products, locale)
-        val variables = computed.toMutableMap()
-        options.variablesPerPackage.forEach { (id, vars) -> variables[id] = (variables[id] ?: emptyMap()) + vars }
+        // Prices are formatted in the language the screen is drawn in (as the Web SDK does), not in the device language.
+        fun variablesFor(screen: kotlinx.serialization.json.JsonObject): Map<String, Map<String, String>> {
+            val variables = Pricing.productVariables(options.products, Localization.forPaywall(screen, locale)).toMutableMap()
+            options.variablesPerPackage.forEach { (id, vars) -> variables[id] = (variables[id] ?: emptyMap()) + vars }
+            return variables
+        }
         val custom = options.customVariables.mapValues { (_, v) ->
             when (v) {
-                is Double, is Float -> (v as Number).toDouble().let { if (it == Math.floor(it) && !it.isInfinite()) it.toLong().toString() else it.toString() }
+                is Double, is Float -> com.miniwall.core.logic.JsNumber.format((v as Number).toDouble())
                 else -> v.toString()
             }
         }
@@ -108,7 +112,7 @@ internal class PresentationCoordinator(private val activity: Activity?, private 
             enqueue = Miniwall.client::enqueue,
             loadScreen = { id, done -> Miniwall.scope.launch { done(runCatching { Miniwall.loadScreen(id, options.screens) }) } },
             controllerFactory = { json, answers, onEvent ->
-                ScreenController(json, locale, dark, variables, custom, info, showRestore, answers, onEvent)
+                ScreenController(json, locale, dark, variablesFor(json), custom, info, showRestore, answers, onEvent)
             },
             host = this,
             client = Miniwall.eventClient,

@@ -53,11 +53,11 @@ object TextLogic {
     }
 
     private val NEW_LINE = Regex("""\\\n""")
-    private val BOLD = Regex("""\*\*(.*?)\*\*""")
-    private val ITALIC = Regex("""\*(.*?)\*""")
-    private val STRIKE = Regex("""~(.*?)~""")
-    private val CODE = Regex("""`(.*?)`""")
-    private val LINK = Regex("""\[(.*?)\]\((.*?)\)""")
+    private val BOLD = Regex("""\*\*([^\n\r\u2028\u2029]*?)\*\*""")
+    private val ITALIC = Regex("""\*([^\n\r\u2028\u2029]*?)\*""")
+    private val STRIKE = Regex("""~([^\n\r\u2028\u2029]*?)~""")
+    private val CODE = Regex("""`([^\n\r\u2028\u2029]*?)`""")
+    private val LINK = Regex("""\[([^\n\r\u2028\u2029]*?)\]\(([^\n\r\u2028\u2029]*?)\)""")
     internal const val CODE_OPEN = "<span style='font-family: monospace'>"
 
     /** The small markdown subset as HTML, after escaping (same output as the web, tag for tag). */
