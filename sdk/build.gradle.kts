@@ -7,7 +7,7 @@ plugins {
 
 // Maven coordinates app.miniwall:sdk (React Native / Flutter substitute this project for it locally).
 group = "app.miniwall"
-version = "0.1.0"
+version = "0.1.1"
 
 android {
     namespace = "com.miniwall.sdk"

@@ -29,7 +29,7 @@ dependencyResolutionManagement {
 
 // app/build.gradle.kts
 dependencies {
-    implementation("app.miniwall:sdk:0.1.0")
+    implementation("app.miniwall:sdk:0.1.1")
 }
 ```
 

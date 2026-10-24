@@ -128,7 +128,7 @@ class PresentOptions(
  * `preload`, `reportPurchase`). Miniwall renders screens; your app sells (D-109).
  */
 object Miniwall {
-    const val VERSION = "0.1.0"
+    const val VERSION = "0.1.1"
     internal const val DEFAULT_API_URL = "https://api.miniwall.app"
 
     data class Options(
